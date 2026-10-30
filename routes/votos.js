@@ -298,13 +298,14 @@ router.delete('/estudiantes/:dni', (req, res) => {
 });
 
 // RUTA PARA IMPORTAR EXCEL CON MULTER Y XLSX (Soporta codigo_qr, dni, nombres, apellidos, nivel, grado_seccion, mesa)
-router.post('/estudiantes/importar', upload.single('archivo'), (req, res) => {
+router.post('/estudiantes/importar', upload.any(), (req, res) => {
   try {
-    if (!req.file) {
+    const file = req.files && req.files[0];
+    if (!file) {
       return res.status(400).json({ error: 'No se ha subido ningún archivo Excel.' });
     }
 
-    const workbook = xlsx.readFile(req.file.path);
+    const workbook = xlsx.readFile(file.path);
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const estudiantes = xlsx.utils.sheet_to_json(sheet);
