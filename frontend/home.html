@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Principal - Sistema de Votación Escolar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+    
+    <!-- Encabezado con Botón de Reinicio de Elecciones -->
+    <header class="bg-[#125c1d] text-white p-5 shadow-lg border-b-4 border-yellow-500">
+        <div class="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <img src="Logo.png" alt="Escudo I.E. Coronel Bolognesi" class="h-14 w-14 object-contain bg-white rounded-full p-1 border-2 border-yellow-400" onerror="this.src='Logo.png'">
+                <div>
+                    <h2 class="text-xs tracking-widest text-yellow-300 font-bold uppercase">I.E. Coronel Bolognesi - Chiquián</h2>
+                    <h1 class="text-xl sm:text-2xl font-extrabold">Sistema de Elecciones del Municipio Escolar</h1>
+                    <p class="text-xs text-green-200 mt-0.5">Panel de Control y Acceso General</p>
+                </div>
+            </div>
+            <!-- Botón de Seguridad para Reiniciar Votaciones -->
+            <button onclick="reiniciarEleccionesSistema()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-lg transition flex items-center gap-2 border border-red-400">
+                🔄 Reiniciar Elecciones
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="container mx-auto p-6 max-w-5xl flex-1 flex flex-col justify-center items-center">
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-black text-slate-800">Seleccione el módulo al que desea ingresar:</h2>
+            <p class="text-xs text-slate-500 mt-1 font-medium">Gestione el padrón, configure las listas, emita su voto o revise los resultados en tiempo real.</p>
+        </div>
+
+        <!-- 🌟 1. CÉDULA DE VOTACIÓN AL CENTRO Y DESTACADA -->
+        <div class="w-full max-w-md mb-8">
+            <a href="index.html" class="bg-white p-6 rounded-3xl shadow-xl border-4 border-green-600 hover:shadow-2xl transition duration-300 text-center flex flex-col items-center group block">
+                <div class="w-32 h-32 bg-green-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden group-hover:scale-105 transition shadow-inner border border-green-100 p-3">
+                    <img src="/uploads/cedula.jpg" alt="Cédula de Votación" class="w-full h-full object-contain" onerror="this.src='Logo.png'">
+                </div>
+                <h3 class="font-black text-slate-800 text-xl group-hover:text-green-700 mb-1">Cédula de Votación</h3>
+                <p class="text-xs text-slate-500 font-medium leading-relaxed">Pantalla para que los estudiantes emitan su voto secreto de manera ágil.</p>
+                <div class="mt-4 bg-[#125c1d] text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow group-hover:bg-green-800 transition">
+                    Ingresar a Votación ➔
+                </div>
+            </a>
+        </div>
+
+        <!-- 📂 2. MÓDULOS ADMINISTRATIVOS E INFERIORES (Pequeños y compactos) -->
+        <div class="w-full">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 text-center">Módulos Administrativos y de Control</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                
+                <!-- Gestión de Listas -->
+                <a href="listas.html" class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 hover:border-green-600 hover:shadow-lg transition flex items-center gap-3 group">
+                    <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 border border-blue-100 p-2 group-hover:scale-105 transition">
+                        <img src="/uploads/listas.jpg" alt="Listas" class="w-full h-full object-contain" onerror="this.src='Logo.png'">
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800 group-hover:text-green-700">Gestión de Listas</h4>
+                        <p class="text-[10px] text-slate-500">Inscribir o editar listas y candidatos.</p>
+                    </div>
+                </a>
+
+                <!-- Padrón Electoral -->
+                <a href="estudiantes.html" class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 hover:border-green-600 hover:shadow-lg transition flex items-center gap-3 group">
+                    <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center shrink-0 border border-amber-100 p-2 group-hover:scale-105 transition">
+                        <img src="/uploads/padron.jpg" alt="Padrón" class="w-full h-full object-contain" onerror="this.src='Logo.png'">
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800 group-hover:text-green-700">Padrón Electoral</h4>
+                        <p class="text-[10px] text-slate-500">Cargar estudiantes por Excel o manual.</p>
+                    </div>
+                </a>
+
+                <!-- Panel de Resultados -->
+                <a href="resultados.html" class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 hover:border-green-600 hover:shadow-lg transition flex items-center gap-3 group">
+                    <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center shrink-0 border border-purple-100 p-2 group-hover:scale-105 transition">
+                        <img src="/uploads/resultados.jpg" alt="Resultados" class="w-full h-full object-contain" onerror="this.src='Logo.png'">
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800 group-hover:text-green-700">Panel de Resultados</h4>
+                        <p class="text-[10px] text-slate-500">Estadísticas y gráficos en tiempo real.</p>
+                    </div>
+                </a>
+
+                <!-- Acta Electoral -->
+                <a href="acta.html" class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 hover:border-green-600 hover:shadow-lg transition flex items-center gap-3 group">
+                    <div class="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center shrink-0 border border-rose-100 p-2 group-hover:scale-105 transition">
+                        <img src="/uploads/acta.jpg" alt="Acta" class="w-full h-full object-contain" onerror="this.src='Logo.png'">
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800 group-hover:text-green-700">Acta Electoral</h4>
+                        <p class="text-[10px] text-slate-500">Formato oficial de mesas y general.</p>
+                    </div>
+                </a>
+
+                <!-- Control de Asistencia -->
+                <a href="asistencia.html" class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 hover:border-green-600 hover:shadow-lg transition flex items-center gap-3 sm:col-span-2 md:col-span-2 group">
+                    <div class="w-12 h-12 bg-cyan-50 rounded-xl flex items-center justify-center shrink-0 border border-cyan-100 p-2 group-hover:scale-105 transition">
+                        <img src="/uploads/asistencia.jpg" alt="Asistencia" class="w-full h-full object-contain" onerror="this.src='Logo.png'">
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800 group-hover:text-green-700">Control de Asistencia</h4>
+                        <p class="text-[10px] text-slate-500">Consulte en tiempo real qué alumnos ya votaron y quiénes faltan.</p>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-[#125c1d] text-green-100 text-center p-4 text-xs border-t border-green-900 mt-8">
+        <p class="font-medium">I.E. Coronel Bolognesi - Chiquián &copy; 2026 - Sistema de Votación Escolar</p>
+        <p class="text-yellow-300 font-semibold mt-1">
+            Diseñado y Desarrollado por: <span class="underline">Minerva A&B - Kevin Jack Maguiña Balarezo</span>
+        </p>
+    </footer>
+
+    <!-- Script de Control de Reinicio -->
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        async function reiniciarEleccionesSistema() {
+            if (!confirm("⚠️ ADVERTENCIA DE SEGURIDAD:\n\n¿Esta seguro de que desea reiniciar las elecciones?\n\nEsta acción borrará todos los votos registrados y restablecerá a todos los estudiantes a estado 'Pendiente' para volver a votar. EL PADRÓN DE ESTUDIANTES Y LAS LISTAS NO SE BORRARÁN.")) {
+                return;
+            }
+            const password = prompt("Ingrese la contraseña de administrador para autorizar el reinicio:");
+            if (!password) return;
+            if (password !== 'admin123' && password !== 'bolognesi2026') {
+                alert("Contraseña de autorización incorrecta.");
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/reiniciar-elecciones`, { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.error || 'Error al reiniciar las elecciones.');
+                    return;
+                }
+                alert('✨ ¡El proceso electoral se ha reiniciado exitosamente! Todos los estudiantes pueden volver a votar.');
+                location.reload();
+            } catch (err) {
+                console.error("Error al reiniciar:", err);
+                alert('Error de conexión con el servidor.');
+            }
+        }
+    </script>
+</body>
+</html>

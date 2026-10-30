@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia Electoral - I.E. Coronel Bolognesi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+    
+    <!-- Encabezado -->
+    <header class="bg-[#125c1d] text-white p-4 shadow-lg border-b-4 border-yellow-500">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="Logo.png" alt="Escudo I.E. Coronel Bolognesi" class="h-12 w-12 object-contain bg-white rounded-full p-1 border-2 border-yellow-400">
+                <div>
+                    <h2 class="text-xs tracking-widest text-yellow-300 font-bold uppercase">I.E. Coronel Bolognesi - Chiquián</h2>
+                    <h1 class="text-lg font-extrabold">Control de Asistencia Electoral</h1>
+                </div>
+            </div>
+            <a href="home.html" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold px-3 py-1.5 rounded-xl text-xs shadow transition flex items-center gap-1">
+                🏠 Volver al Menú
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="container mx-auto p-4 max-w-6xl flex-1 flex flex-col gap-6 my-6">
+
+        <!-- Tarjetas de Resumen Dinámicas -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl shadow-md border-t-4 border-[#125c1d] flex justify-between items-center">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase">Total Padrón (Filtrado)</p>
+                    <h3 id="stat-total" class="text-3xl font-black text-slate-800">0</h3>
+                </div>
+                <div class="p-3 bg-green-50 text-[#125c1d] rounded-xl text-xl font-bold">👥</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-md border-t-4 border-green-600 flex justify-between items-center">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase">Ya Votaron</p>
+                    <h3 id="stat-votaron" class="text-3xl font-black text-green-600">0</h3>
+                </div>
+                <div class="p-3 bg-green-50 text-green-600 rounded-xl text-xl font-bold">✅</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-md border-t-4 border-amber-500 flex justify-between items-center">
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase">Faltan Votar</p>
+                    <h3 id="stat-pendientes" class="text-3xl font-black text-amber-600">0</h3>
+                </div>
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl text-xl font-bold">⏳</div>
+            </div>
+        </div>
+
+        <!-- Filtros de Búsqueda y Selección -->
+        <div class="bg-white p-5 rounded-3xl shadow-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="flex flex-col">
+                <label class="text-[11px] font-bold text-slate-500 mb-1">🔍 Buscar Estudiante:</label>
+                <input type="text" id="input-buscar" placeholder="Escriba DNI o Nombre..." oninput="filtrarEstudiantes()"
+                       class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600">
+            </div>
+
+            <div class="flex flex-col">
+                <label class="text-[11px] font-bold text-slate-500 mb-1">🏫 Nivel Electoral:</label>
+                <select id="filtro-nivel" onchange="filtrarEstudiantes()" class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600 bg-white">
+                    <option value="TODOS">TODOS LOS NIVELES</option>
+                    <option value="PRIMARIA">PRIMARIA</option>
+                    <option value="SECUNDARIA">SECUNDARIA</option>
+                </select>
+            </div>
+
+            <!-- NUEVO FILTRO: Mesa de Votación -->
+            <div class="flex flex-col">
+                <label class="text-[11px] font-bold text-slate-500 mb-1">🏛️ Filtrar por Mesa:</label>
+                <select id="filtro-mesa" onchange="filtrarEstudiantes()" class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600 bg-white">
+                    <option value="TODAS">TODAS LAS MESAS</option>
+                    <option value="1">Mesa 1</option>
+                    <option value="2">Mesa 2</option>
+                    <option value="3">Mesa 3</option>
+                    <option value="4">Mesa 4</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col">
+                <label class="text-[11px] font-bold text-slate-500 mb-1">📌 Estado de Voto:</label>
+                <select id="filtro-estado" onchange="filtrarEstudiantes()" class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600 bg-white">
+                    <option value="TODOS">TODOS (Votarón y Pendientes)</option>
+                    <option value="PENDIENTE">PENDIENTES</option>
+                    <option value="VOTADO">YA VOTARON</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabla de Asistencia -->
+        <div class="bg-white p-6 rounded-3xl shadow-xl border border-slate-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-black text-slate-800 text-base">📋 Padrón y Asistencia por Mesa</h3>
+                <span id="contador-mostrados" class="text-xs bg-slate-100 text-slate-700 font-extrabold px-3 py-1 rounded-full">0 mostrado(s)</span>
+            </div>
+            <div class="overflow-x-auto max-h-[500px] rounded-2xl border border-slate-200">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-100 text-slate-700 text-[11px] uppercase font-black sticky top-0">
+                        <tr>
+                            <th class="p-3">DNI</th>
+                            <th class="p-3">Estudiante</th>
+                            <th class="p-3">Nivel</th>
+                            <th class="p-3">Grado y Sección</th>
+                            <th class="p-3 text-center">Mesa Asignada</th>
+                            <th class="p-3 text-center">Estado de Voto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-asistencia" class="divide-y divide-slate-200 text-xs text-slate-700 font-medium">
+                        <!-- Cargado dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-[#125c1d] text-green-100 text-center p-4 text-xs border-t border-green-900 mt-6">
+        <p class="font-medium">I.E. Coronel Bolognesi - Chiquián &copy; 2026 - Sistema de Votación Escolar</p>
+        <p class="text-yellow-300 font-semibold mt-1">
+            Diseñado y Desarrollado por: <span class="underline">Minerva A&B - Kevin Jack Maguiña Balarezo</span>
+        </p>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        let listaEstudiantesGlobal = [];
+
+        window.addEventListener('load', () => {
+            cargarAsistencia();
+        });
+
+        async function cargarAsistencia() {
+            try {
+                const res = await fetch(`${API_URL}/estudiantes`);
+                listaEstudiantesGlobal = await res.json();
+                filtrarEstudiantes();
+            } catch (err) {
+                console.error("Error al cargar la asistencia:", err);
+            }
+        }
+
+        function filtrarEstudiantes() {
+            const textoBusqueda = document.getElementById('input-buscar').value.toLowerCase().trim();
+            const nivelFiltro = document.getElementById('filtro-nivel').value;
+            const mesaFiltro = document.getElementById('filtro-mesa').value;
+            const estadoFiltro = document.getElementById('filtro-estado').value;
+
+            const filtrados = listaEstudiantesGlobal.filter(est => {
+                const dni = String(est.dni || '').toLowerCase();
+                const nombreCompleto = `${est.apellidos} ${est.nombres}`.toLowerCase();
+                const nivelEst = String(est.nivel || '').toUpperCase();
+                const mesaEst = String(est.mesa || '1');
+                const haVotado = Number(est.ha_votado) === 1;
+
+                // Filtro de texto (DNI o Nombre)
+                const cumpleTexto = dni.includes(textoBusqueda) || nombreCompleto.includes(textoBusqueda);
+                // Filtro de Nivel
+                const cumpleNivel = (nivelFiltro === 'TODOS' || nivelEst === nivelFiltro);
+                // Filtro de Mesa
+                const cumpleMesa = (mesaFiltro === 'TODAS' || mesaEst === mesaFiltro);
+                // Filtro de Estado de Voto
+                let cumpleEstado = true;
+                if (estadoFiltro === 'PENDIENTE') cumpleEstado = !haVotado;
+                if (estadoFiltro === 'VOTADO') cumpleEstado = haVotado;
+
+                return cumpleTexto && cumpleNivel && cumpleMesa && cumpleEstado;
+            });
+
+            // Actualizar tarjetas de contadores según el filtro activo
+            const total = filtrados.length;
+            const votaron = filtrados.filter(e => Number(e.ha_votado) === 1).length;
+            const pendientes = total - votaron;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-votaron').innerText = votaron;
+            document.getElementById('stat-pendientes').innerText = pendientes;
+            document.getElementById('contador-mostrados').innerText = `${total} mostrado(s)`;
+
+            const tbody = document.getElementById('tabla-asistencia');
+            tbody.innerHTML = '';
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-bold">No se encontraron estudiantes con los filtros seleccionados.</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach(est => {
+                const estadoVoto = Number(est.ha_votado) === 1 
+                    ? `<span class="bg-green-100 text-green-700 font-bold px-2.5 py-1 rounded-full text-[10px]">YA VOTÓ ✅</span>`
+                    : `<span class="bg-amber-100 text-amber-700 font-bold px-2.5 py-1 rounded-full text-[10px]">PENDIENTE ⏳</span>`;
+
+                const numMesa = est.mesa || 1;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-mono font-bold">${est.dni}</td>
+                        <td class="p-3 font-bold text-slate-800">${est.apellidos}, ${est.nombres}</td>
+                        <td class="p-3 uppercase font-semibold">${est.nivel}</td>
+                        <td class="p-3 font-semibold">${est.grado_seccion}</td>
+                        <td class="p-3 text-center font-black text-[#125c1d]">Mesa ${numMesa}</td>
+                        <td class="p-3 text-center">${estadoVoto}</td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>

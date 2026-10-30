@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión del Padrón Electoral - I.E. Coronel Bolognesi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librería SheetJS para leer archivos Excel directamente en el navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+
+    <!-- Encabezado con Botón de Menú Principal -->
+    <header class="bg-[#125c1d] text-white p-4 shadow-lg border-b-4 border-yellow-500">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="Logo.png" alt="Escudo I.E. Coronel Bolognesi" class="h-12 w-12 object-contain bg-white rounded-full p-1 border-2 border-yellow-400">
+                <div>
+                    <h2 class="text-xs tracking-widest text-yellow-300 font-bold uppercase">I.E. Coronel Bolognesi - Chiquián</h2>
+                    <h1 class="text-lg font-extrabold">Gestión del Padrón Electoral</h1>
+                </div>
+            </div>
+            <a href="home.html" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold px-3 py-1.5 rounded-xl text-xs shadow transition flex items-center gap-1">
+                🏠 Menú Principal
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="container mx-auto p-4 max-w-5xl flex-1 flex flex-col justify-center my-6">
+
+        <!-- 1. PANTALLA DE ACCESO RESTRINGIDO (AUTENTICACIÓN) -->
+        <div id="seccion-auth" class="bg-white p-8 rounded-3xl shadow-2xl border-t-8 border-[#125c1d] text-center max-w-md mx-auto w-full">
+            <div class="inline-block p-4 bg-green-50 text-[#125c1d] rounded-2xl text-3xl mb-3 shadow-inner">
+                🔐
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-1">Acceso Restringido</h2>
+            <p class="text-xs text-slate-500 mb-6 font-medium">
+                Ingrese la contraseña de administrador para gestionar el padrón electoral.
+            </p>
+
+            <div class="flex flex-col gap-3">
+                <input type="password" id="password-admin" placeholder="Contraseña de autorización" 
+                       class="border-2 border-slate-300 focus:border-[#125c1d] p-3.5 rounded-2xl text-base font-bold text-center outline-none transition shadow-sm">
+                
+                <button onclick="verificarPassword()" class="bg-[#125c1d] hover:bg-green-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition text-xs">
+                    Ingresar al Panel
+                </button>
+            </div>
+            <div id="error-msg" class="text-red-500 text-xs font-bold mt-4"></div>
+        </div>
+
+        <!-- 2. PANEL DE GESTIÓN DEL PADRÓN (OCULTO HASTA AUTENTICARSE) -->
+        <div id="seccion-panel" class="hidden flex flex-col gap-6">
+
+            <!-- Encabezado de Sesión Activa -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-green-600 font-bold text-lg">🟢</span>
+                    <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Panel de Administración de Estudiantes Autorizado</span>
+                </div>
+                <button onclick="location.reload()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition">
+                    🔒 Cerrar Sesión
+                </button>
+            </div>
+
+            <!-- Formulario de Registro Individual -->
+            <div class="bg-white p-6 rounded-3xl shadow-xl border-t-8 border-[#125c1d]">
+                <h3 class="font-black text-slate-800 text-base mb-4 flex items-center gap-2">
+                    <span>👤</span> Registrar o Editar Estudiante
+                </h3>
+                
+                <form id="form-estudiante" onsubmit="guardarEstudiante(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <input type="hidden" id="edit-mode" value="false">
+                    
+                    <div class="flex flex-col">
+                        <label class="text-[11px] font-bold text-slate-500 mb-1">DNI:</label>
+                        <input type="text" id="dni" maxlength="8" placeholder="Ej. 70123456" required
+                               class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[11px] font-bold text-slate-500 mb-1">Nombres:</label>
+                        <input type="text" id="nombres" placeholder="Ej. Carlos" required
+                               class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[11px] font-bold text-slate-500 mb-1">Apellidos:</label>
+                        <input type="text" id="apellidos" placeholder="Ej. Pérez Gómez" required
+                               class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[11px] font-bold text-slate-500 mb-1">Nivel:</label>
+                        <select id="nivel" class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600 bg-white">
+                            <option value="PRIMARIA">Primaria</option>
+                            <option value="SECUNDARIA">Secundaria</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col sm:col-span-2 lg:col-span-2">
+                        <label class="text-[11px] font-bold text-slate-500 mb-1">Grado y Sección:</label>
+                        <input type="text" id="grado_seccion" placeholder="Ej. 5to A" required
+                               class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600">
+                    </div>
+                    <div class="sm:col-span-2 lg:col-span-3 flex gap-2 pt-2">
+                        <button type="submit" id="btn-guardar" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-bold py-3 rounded-xl text-xs shadow transition">
+                            Guardar Estudiante en el Padrón 🚀
+                        </button>
+                        <button type="button" id="btn-cancelar" onclick="limpiarFormulario()" class="hidden bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold px-4 py-3 rounded-xl text-xs transition">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Cargar Padrón Completo desde Excel -->
+            <div class="bg-white p-6 rounded-3xl shadow-xl border-t-8 border-amber-500">
+                <h3 class="font-black text-slate-800 text-base mb-2 flex items-center gap-2">
+                    <span>📊</span> Cargar Padrón Completo desde Excel
+                </h3>
+                <p class="text-xs text-slate-500 mb-4 font-medium">
+                    Sube un archivo Excel (<code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-bold">.xlsx</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-bold">.xls</code> o <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-bold">.csv</code>) con las columnas: <span class="text-green-700 font-bold">dni, nombres, apellidos, nivel</span> y <span class="text-green-700 font-bold">grado_seccion</span>.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 items-center">
+                    <input type="file" id="excel-file" accept=".xlsx, .xls, .csv"
+                           class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 border border-slate-200 rounded-xl p-2 bg-slate-50">
+                    <button onclick="cargarExcel()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl text-xs shadow transition whitespace-nowrap">
+                        Cargar Archivo Excel 📁
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de Estudiantes Registrados -->
+            <div class="bg-white p-6 rounded-3xl shadow-xl border-t-8 border-slate-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-black text-slate-800 text-base">📋 Padrón de Estudiantes Inscritos</h3>
+                    <span id="total-estudiantes" class="text-xs bg-green-100 text-[#125c1d] font-extrabold px-3 py-1 rounded-full">0 registrados</span>
+                </div>
+                <div class="overflow-x-auto max-h-96 rounded-2xl border border-slate-200">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 text-[11px] uppercase font-black sticky top-0">
+                            <tr>
+                                <th class="p-3">DNI</th>
+                                <th class="p-3">Apellidos y Nombres</th>
+                                <th class="p-3">Nivel</th>
+                                <th class="p-3">Grado y Sección</th>
+                                <th class="p-3 text-center">Estado Voto</th>
+                                <th class="p-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-estudiantes" class="divide-y divide-slate-200 text-xs text-slate-700 font-medium">
+                            <!-- Cargado dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-[#125c1d] text-green-100 text-center p-4 text-xs border-t border-green-900 mt-6">
+        <p class="font-medium">I.E. Coronel Bolognesi - Chiquián &copy; 2026 - Sistema de Votación Escolar</p>
+        <p class="text-yellow-300 font-semibold mt-1">
+            Diseñado y Desarrollado por: <span class="underline">Kevin Jack Maguiña Balarezo</span>
+        </p>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+
+        // Permitir presionar Enter en la contraseña
+        document.getElementById('password-admin').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                verificarPassword();
+            }
+        });
+
+        function verificarPassword() {
+            const pass = document.getElementById('password-admin').value.trim();
+            const errorDiv = document.getElementById('error-msg');
+            
+            // Contraseñas de administrador del sistema
+            if (pass === 'admin123' || pass === 'bolognesi2026') {
+                document.getElementById('seccion-auth').classList.add('hidden');
+                document.getElementById('seccion-panel').classList.remove('hidden');
+                listarEstudiantes();
+            } else {
+                errorDiv.innerText = 'Contraseña incorrecta. Intente nuevamente.';
+            }
+        }
+
+        async function listarEstudiantes() {
+            try {
+                const res = await fetch(`${API_URL}/estudiantes`);
+                const estudiantes = await res.json();
+                const tbody = document.getElementById('tabla-estudiantes');
+                tbody.innerHTML = '';
+
+                document.getElementById('total-estudiantes').innerText = `${estudiantes.length} registrados`;
+
+                if (estudiantes.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-bold">No hay estudiantes registrados en el padrón.</td></tr>`;
+                    return;
+                }
+
+                estudiantes.forEach(est => {
+                    const estadoVoto = est.ha_votado === 1 
+                        ? `<span class="bg-green-100 text-green-700 font-bold px-2.5 py-1 rounded-full text-[10px]">Ya Votó ✅</span>`
+                        : `<span class="bg-amber-100 text-amber-700 font-bold px-2.5 py-1 rounded-full text-[10px]">Pendiente ⏳</span>`;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="p-3 font-mono font-bold">${est.dni}</td>
+                            <td class="p-3 font-bold text-slate-800">${est.apellidos}, ${est.nombres}</td>
+                            <td class="p-3 uppercase font-semibold">${est.nivel}</td>
+                            <td class="p-3 font-semibold">${est.grado_seccion}</td>
+                            <td class="p-3 text-center">${estadoVoto}</td>
+                            <td class="p-3 text-center flex justify-center gap-2">
+                                <button onclick="cargarParaEditar('${est.dni}', '${est.nombres}', '${est.apellidos}', '${est.nivel}', '${est.grado_seccion}')" 
+                                        class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold px-2.5 py-1.5 rounded-xl transition text-[11px]">
+                                    ✏️ Modificar
+                                </button>
+                                <button onclick="eliminarEstudiante('${est.dni}')" 
+                                        class="bg-red-100 hover:bg-red-200 text-red-600 font-bold px-2.5 py-1.5 rounded-xl transition text-[11px]">
+                                    🗑️ Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Error al listar estudiantes:", err);
+            }
+        }
+
+        async function guardarEstudiante(e) {
+            e.preventDefault();
+            const dni = document.getElementById('dni').value.trim();
+            const nombres = document.getElementById('nombres').value.trim();
+            const apellidos = document.getElementById('apellidos').value.trim();
+            const nivel = document.getElementById('nivel').value;
+            const grado_seccion = document.getElementById('grado_seccion').value.trim();
+            const isEdit = document.getElementById('edit-mode').value === 'true';
+
+            const endpoint = isEdit ? `${API_URL}/estudiantes/${dni}` : `${API_URL}/estudiantes`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dni, codigo_qr: dni, nombres, apellidos, nivel, grado_seccion })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.error || 'Error al guardar el estudiante.');
+                    return;
+                }
+
+                alert(isEdit ? 'Estudiante actualizado correctamente.' : 'Estudiante registrado correctamente.');
+                limpiarFormulario();
+                listarEstudiantes();
+            } catch (err) {
+                console.error("Error:", err);
+                alert('Error de conexión con el servidor.');
+            }
+        }
+
+        function cargarParaEditar(dni, nombres, apellidos, nivel, grado) {
+            document.getElementById('dni').value = dni;
+            document.getElementById('dni').disabled = true; // El DNI no se cambia por ser clave primaria
+            document.getElementById('nombres').value = nombres;
+            document.getElementById('apellidos').value = apellidos;
+            document.getElementById('nivel').value = nivel;
+            document.getElementById('grado_seccion').value = grado;
+            
+            document.getElementById('edit-mode').value = 'true';
+            document.getElementById('btn-guardar').innerText = 'Actualizar Datos del Estudiante 🔄';
+            document.getElementById('btn-cancelar').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('form-estudiante').reset();
+            document.getElementById('dni').disabled = false;
+            document.getElementById('edit-mode').value = 'false';
+            document.getElementById('btn-guardar').innerText = 'Guardar Estudiante en el Padrón 🚀';
+            document.getElementById('btn-cancelar').classList.add('hidden');
+        }
+
+        async function eliminarEstudiante(dni) {
+            if (!confirm(`¿Está seguro de eliminar al estudiante con DNI ${dni}?`)) return;
+
+            try {
+                const res = await fetch(`${API_URL}/estudiantes/${dni}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.error || 'No se pudo eliminar al estudiante.');
+                    return;
+                }
+                alert('Estudiante eliminado del padrón.');
+                listarEstudiantes();
+            } catch (err) {
+                console.error("Error al eliminar:", err);
+            }
+        }
+
+        // Lógica de lectura y envío masivo del archivo Excel
+        async function cargarExcel() {
+            const fileInput = document.getElementById('excel-file');
+            if (fileInput.files.length === 0) {
+                alert('Por favor, seleccione un archivo Excel primero.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonList = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (jsonList.length === 0) {
+                        alert('El archivo Excel está vacío o no tiene un formato válido.');
+                        return;
+                    }
+
+                    const res = await fetch(`${API_URL}/estudiantes/importar`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(jsonList)
+                    });
+
+                    const result = await res.json();
+                    if (!res.ok) {
+                        alert(result.error || 'Error al importar el padrón.');
+                        return;
+                    }
+
+                    alert(`¡Padrón importado exitosamente! Se registraron ${result.registrados} estudiantes.`);
+                    fileInput.value = '';
+                    listarEstudiantes();
+
+                } catch (err) {
+                    console.error("Error al procesar Excel:", err);
+                    alert('Error al procesar el archivo Excel. Verifique las columnas requeridas.');
+                }
+            };
+
+            reader.readAsArrayGrid ? reader.readAsArrayBuffer(file) : reader.readAsArrayBuffer(file);
+        }
+    </script>
+</body>
+</html>

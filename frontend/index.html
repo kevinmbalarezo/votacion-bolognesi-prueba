@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cédula de Votación - I.E. Coronel Bolognesi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librería para escanear QR con la cámara -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+    
+    <!-- Encabezado -->
+    <header class="bg-[#125c1d] text-white p-4 shadow-lg border-b-4 border-yellow-500">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="Logo.png" alt="Escudo I.E. Coronel Bolognesi" class="h-12 w-12 object-contain bg-white rounded-full p-1 border-2 border-yellow-400">
+                <div>
+                    <h2 class="text-xs tracking-widest text-yellow-300 font-bold uppercase">I.E. Coronel Bolognesi - Chiquián</h2>
+                    <h1 class="text-lg font-extrabold">Elecciones del Municipio Escolar</h1>
+                </div>
+            </div>
+            <a href="home.html" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold px-3 py-1.5 rounded-xl text-xs shadow transition">
+                🏠 Menú Principal
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="container mx-auto p-4 max-w-4xl flex-1 flex flex-col justify-center my-4">
+        
+        <!-- MÓDULO DE ESCANEO ACTIVO AUTOMÁTICO -->
+        <div id="seccion-identificacion" class="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl border-t-8 border-[#125c1d] text-center max-w-xl mx-auto w-full">
+            
+            <div class="inline-block p-3 bg-green-50 text-[#125c1d] rounded-2xl text-3xl mb-2 shadow-inner">
+                📷
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-1">Escanee su Carnet Escolar</h2>
+            <p class="text-xs text-slate-500 mb-6 font-medium">
+                Acerque el código QR del carnet a la cámara o utilice el lector USB.
+            </p>
+            
+            <input type="text" id="qr-input" autofocus class="opacity-0 absolute -top-20">
+
+            <!-- 🔴 VISOR DE CÁMARA AMPLIADO (Ancho y alto optimizados) -->
+            <div class="w-full max-w-md mx-auto border-4 border-slate-200 rounded-2xl overflow-hidden shadow-xl mb-6 bg-black">
+                <div id="reader" class="w-full"></div>
+            </div>
+
+            <!-- Contingencia por DNI -->
+            <div class="border-t border-slate-200 pt-4 mt-2">
+                <p class="text-xs text-slate-400 font-bold mb-2">¿Problemas con el QR? Ingrese el DNI manualmente:</p>
+                <div class="flex gap-2 justify-center max-w-sm mx-auto">
+                    <input type="text" id="dni-input" maxlength="8" placeholder="DNI..."
+                           class="border-2 border-slate-200 focus:border-[#125c1d] p-3 rounded-xl text-sm font-mono font-bold text-center w-44 outline-none transition shadow-sm">
+                    <button onclick="verificarPorDNI()" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-xl text-xs transition shadow">
+                        Buscar 🔍
+                    </button>
+                </div>
+            </div>
+
+            <div id="error-msg" class="text-red-500 text-xs font-extrabold mt-4"></div>
+        </div>
+
+        <!-- CÉDULA DE VOTACIÓN -->
+        <div id="seccion-votacion" class="hidden bg-white p-6 sm:p-10 rounded-3xl shadow-2xl border-t-8 border-[#125c1d]">
+            
+            <!-- Datos del Estudiante Votante -->
+            <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl mb-8 border border-slate-200 shadow-sm">
+                <div class="w-14 h-14 bg-green-100 text-[#125c1d] rounded-2xl flex items-center justify-center font-black text-2xl shadow-inner">
+                    🎓
+                </div>
+                <div>
+                    <span id="estudiante-nivel" class="text-[10px] bg-yellow-400 text-slate-900 font-extrabold px-2.5 py-0.5 rounded-full uppercase"></span>
+                    <h3 id="estudiante-nombre" class="text-base font-extrabold text-slate-800 mt-1"></h3>
+                    <p id="estudiante-grado" class="text-xs text-slate-500 font-semibold"></p>
+                </div>
+            </div>
+
+            <!-- Título Centrado -->
+            <h3 class="text-center text-xl font-black text-slate-800 mb-8 uppercase tracking-wide">
+                🗳️ Seleccione su Lista Candidata
+            </h3>
+            
+            <!-- GRID DE TARJETAS DE CANDIDATOS (Centrados) -->
+            <div id="lista-candidatos" class="flex flex-wrap justify-center gap-6 mb-10"></div>
+
+            <!-- Botones al Pie -->
+            <div class="flex flex-col gap-3 pt-4 border-t border-slate-200 max-w-md mx-auto w-full">
+                <button onclick="votarEnBlanco()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3.5 rounded-2xl text-sm transition shadow">
+                    ⚪ Votar en Blanco
+                </button>
+                <button onclick="enviarVoto()" id="btn-confirmar" disabled class="w-full bg-green-700 opacity-50 cursor-not-allowed text-white font-extrabold py-4 rounded-2xl text-base shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                    ✅ EMITIR VOTO SELECCIONADO
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-[#125c1d] text-green-100 text-center p-4 text-xs border-t border-green-900">
+        <p class="font-medium">I.E. Coronel Bolognesi - Chiquián &copy; 2026 - Sistema de Votación Escolar</p>
+        <p class="text-yellow-300 font-semibold mt-1">
+            Diseñado y Desarrollado por: <span class="underline">Kevin Jack Maguiña Balarezo</span>
+        </p>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        let estudianteActual = null;
+        let listaSeleccionadaId = null;
+        let html5QrcodeScanner = null;
+
+        window.addEventListener('load', () => {
+            iniciarCamaraAutomatica();
+            
+            const inputOculto = document.getElementById('qr-input');
+            
+            document.addEventListener('keydown', (e) => {
+                if (document.activeElement.id === 'dni-input') return;
+                if (inputOculto && document.activeElement !== inputOculto) {
+                    inputOculto.focus();
+                }
+            });
+            if (inputOculto) {
+                inputOculto.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        consultarEstudiante(this.value.trim());
+                        this.value = '';
+                    }
+                });
+            }
+            const inputDniElem = document.getElementById('dni-input');
+            if (inputDniElem) {
+                inputDniElem.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        verificarPorDNI();
+                    }
+                });
+            }
+        });
+
+        function iniciarCamaraAutomatica() {
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            // Se amplió el área de escaneo (qrbox: 280) para aprovechar el contenedor más grande
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                { fps: 15, qrbox: { width: 280, height: 280 } },
+                (qrCodeMessage) => {
+                    detenerCamaraYConsultar(qrCodeMessage);
+                },
+                (errorMessage) => { }
+            ).catch(err => {
+                console.error("Error al iniciar cámara:", err);
+            });
+        }
+
+        function detenerCamaraYConsultar(codigo) {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => consultarEstudiante(codigo)).catch(() => consultarEstudiante(codigo));
+            } else {
+                consultarEstudiante(codigo);
+            }
+        }
+
+        function verificarPorDNI() {
+            const inputDniElem = document.getElementById('dni-input');
+            const dni = inputDniElem ? inputDniElem.value.trim() : '';
+            
+            if (!dni) {
+                alert("Por favor, ingrese un número de DNI válido.");
+                return;
+            }
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    consultarEstudiante(dni);
+                }).catch(() => {
+                    consultarEstudiante(dni);
+                });
+            } else {
+                consultarEstudiante(dni);
+            }
+        }
+
+        async function consultarEstudiante(identificador) {
+            const errorDiv = document.getElementById('error-msg');
+            errorDiv.innerText = '';
+            try {
+                const response = await fetch(`${API_URL}/estudiante/${encodeURIComponent(identificador)}`);
+                const data = await response.json();
+                if (!response.ok) {
+                    errorDiv.innerText = data.error || 'Estudiante no encontrado o ya votó.';
+                    setTimeout(() => {
+                        errorDiv.innerText = '';
+                        iniciarCamaraAutomatica();
+                    }, 3000);
+                    return;
+                }
+                estudianteActual = data;
+                mostrarCedulaVotacion(data);
+            } catch (err) {
+                console.error("Error:", err);
+                errorDiv.innerText = 'Error de conexión con el servidor.';
+                setTimeout(() => iniciarCamaraAutomatica(), 3000);
+            }
+        }
+
+        async function mostrarCedulaVotacion(estudiante) {
+            document.getElementById('seccion-identificacion').classList.add('hidden');
+            document.getElementById('seccion-votacion').classList.remove('hidden');
+            document.getElementById('estudiante-nombre').innerText = `${estudiante.apellidos}, ${estudiante.nombres}`;
+            document.getElementById('estudiante-grado').innerText = `Grado y Sección: ${estudiante.grado_seccion}`;
+            document.getElementById('estudiante-nivel').innerText = estudiante.nivel;
+            try {
+                const res = await fetch(`${API_URL}/listas/${estudiante.nivel}`);
+                const listas = await res.json();
+                const contenedor = document.getElementById('lista-candidatos');
+                contenedor.innerHTML = '';
+                if (listas.length === 0) {
+                    contenedor.innerHTML = `<p class="col-span-3 text-center text-slate-400 font-bold py-8">⚠️ No hay listas registradas para el nivel ${estudiante.nivel}.</p>`;
+                    return;
+                }
+                
+                listas.forEach(l => {
+                    contenedor.innerHTML += `
+                        <div onclick="seleccionarLista(${l.id}, this)" 
+                             class="tarjeta-candidato w-72 border-4 border-slate-200 bg-white rounded-3xl p-5 cursor-pointer hover:border-green-600 hover:shadow-2xl transition duration-200 text-center flex flex-col items-center justify-between group relative overflow-hidden">
+                            
+                            <div class="check-icon hidden absolute top-3 right-3 bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-black text-sm shadow">
+                                ✓
+                            </div>
+                            <div class="w-36 h-36 mb-4 rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-50 flex items-center justify-center shadow-md group-hover:scale-105 transition">
+                                <img src="${API_URL.replace('/api', '')}${l.foto_candidato_url}" 
+                                     alt="${l.nombre_lista}" 
+                                     class="w-full h-full object-cover">
+                            </div>
+                            <div class="w-full">
+                                <h4 class="font-black text-slate-800 text-lg group-hover:text-green-700 leading-tight mb-2 uppercase">
+                                    ${l.nombre_lista}
+                                </h4>
+                                <div class="bg-slate-100 group-hover:bg-green-50 p-2.5 rounded-xl border border-slate-200 group-hover:border-green-200">
+                                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Candidato Presidencial</p>
+                                    <p class="text-xs font-extrabold text-slate-700 group-hover:text-green-900 mt-0.5">
+                                        ${l.candidato_principal}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error("Error al cargar listas:", err);
+            }
+        }
+
+        function seleccionarLista(id, elemento) {
+            document.querySelectorAll('.tarjeta-candidato').forEach(div => {
+                div.classList.remove('border-green-600', 'bg-green-50/50', 'ring-4', 'ring-green-300');
+                div.classList.add('border-slate-200');
+                div.querySelector('.check-icon').classList.add('hidden');
+            });
+            elemento.classList.remove('border-slate-200');
+            elemento.classList.add('border-green-600', 'bg-green-50/50', 'ring-4', 'ring-green-300');
+            elemento.querySelector('.check-icon').classList.remove('hidden');
+            listaSeleccionadaId = id;
+            const btn = document.getElementById('btn-confirmar');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-green-700');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+
+        async function votarEnBlanco() {
+            if (!confirm("¿Confirma su voto en blanco?")) return;
+            await registrarVotoEnServidor(null);
+        }
+
+        async function enviarVoto() {
+            if (!listaSeleccionadaId) return;
+            if (!confirm("¿Confirma su voto por esta lista? No podrá cambiarlo después.")) return;
+            await registrarVotoEnServidor(listaSeleccionadaId);
+        }
+
+        async function registrarVotoEnServidor(listaId) {
+            try {
+                const res = await fetch(`${API_URL}/votar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dni: estudianteActual.dni,
+                        lista_id: listaId,
+                        nivel: estudianteActual.nivel
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.error || 'Error al registrar el voto');
+                    return;
+                }
+                alert('¡Voto registrado correctamente! Gracias por participar.');
+                location.reload();
+            } catch (err) {
+                console.error("Error al votar:", err);
+                alert("Error de conexión al registrar el voto.");
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>

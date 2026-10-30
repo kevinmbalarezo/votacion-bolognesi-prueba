@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados Electorales - I.E. Coronel Bolognesi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para gráficos estadísticos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+    
+    <!-- Encabezado Institucional con Botón de Menú Principal -->
+    <header class="bg-[#125c1d] text-white p-5 shadow-lg border-b-4 border-yellow-500">
+        <div class="container mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <img src="Logo.png" alt="Escudo I.E. Coronel Bolognesi" class="h-16 w-16 object-contain bg-white rounded-full p-1 shadow-md border-2 border-yellow-400" onerror="this.src='Logo.png'">
+                <div>
+                    <h2 class="text-xs tracking-widest text-yellow-300 font-bold uppercase">I.E. Coronel Bolognesi - Chiquián</h2>
+                    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Panel de Resultados Electorales</h1>
+                    <p class="text-xs text-green-100 font-medium">Conteo Oficial de Sufragio Escolar</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right text-xs text-green-100 bg-[#0f4d17] p-2.5 rounded-xl border border-green-800">
+                    <span>Fecha de Actualización:</span>
+                    <span id="fecha-actualizacion" class="font-bold text-yellow-300 block">--/--/----</span>
+                </div>
+                <!-- Botón de Menú Principal -->
+                <a href="home.html" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold px-4 py-2.5 rounded-xl text-xs shadow-lg transition flex items-center gap-1">
+                    🏠 Menú Principal
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="container mx-auto p-4 md:p-6 max-w-5xl flex-1">
+        
+        <!-- Banner Superior: Estado de Avance y Participación -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border-t-4 border-[#125c1d]">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                <div>
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muestreo / Avance de Participación</h2>
+                    <div class="flex items-baseline gap-2">
+                        <span id="porcentaje-participacion" class="text-4xl font-extrabold text-[#125c1d]">0.00 %</span>
+                        <span class="text-sm text-slate-500 font-medium">de alumnos habilitados han votado</span>
+                    </div>
+                </div>
+                
+                <!-- Selectores de Nivel -->
+                <div class="flex gap-2">
+                    <button onclick="cargarResultados('PRIMARIA')" id="btn-primaria" class="bg-[#125c1d] text-white font-bold py-2.5 px-5 rounded-xl text-sm shadow transition">
+                        Nivel Primaria
+                    </button>
+                    <button onclick="cargarResultados('SECUNDARIA')" id="btn-secundaria" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 px-5 rounded-xl text-sm shadow transition">
+                        Nivel Secundaria
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barra de Progreso de Participación -->
+            <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden mb-2 border border-slate-200">
+                <div id="barra-progreso" class="bg-[#125c1d] h-4 transition-all duration-500 rounded-full" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-500 font-medium">
+                <span>Alumnos que Votaron: <strong id="total-votaron" class="text-slate-800">0</strong></span>
+                <span>Padrón Total Habilitado: <strong id="total-padron" class="text-slate-800">0</strong></span>
+            </div>
+        </div>
+
+        <!-- Panel del Gráfico de Barras Estadístico con Fotos Superpuestas -->
+        <div id="panel-grafico" class="bg-white rounded-2xl shadow-xl p-6 mb-6 border border-slate-200 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="titulo-grafico" class="text-lg font-bold text-slate-800 border-l-4 border-[#125c1d] pl-3">
+                    Resultados por Organización Política
+                </h3>
+                <button onclick="actualizarDatos()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl border flex items-center gap-1 transition">
+                    🔄 Actualizar
+                </button>
+            </div>
+            <!-- Gráfico de Barras Chart.js -->
+            <div class="relative h-80 w-full mb-6">
+                <canvas id="chartResultados"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabla Detallada de Posiciones -->
+        <div id="panel-tabla" class="bg-white rounded-2xl shadow-xl p-6 border border-slate-200 hidden">
+            <h3 class="text-md font-bold text-slate-800 mb-4">Resumen de Escrutinio por Lista</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 uppercase text-xs border-b">
+                            <th class="p-3">Organización Política / Lista</th>
+                            <th class="p-3">Candidato Principal</th>
+                            <th class="p-3 text-center">Total Votos</th>
+                            <th class="p-3 text-right">% Votos Emitidos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-cuerpo" class="divide-y divide-slate-200">
+                        <!-- Carga dinámica -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pie de página con tus créditos -->
+    <footer class="bg-[#125c1d] text-green-100 text-center p-4 text-xs border-t border-green-900">
+        <p class="font-medium">I.E. Coronel Bolognesi - Chiquián &copy; 2026 - Sistema de Votación Escolar</p>
+        <p class="text-yellow-300 font-semibold mt-1">
+            Diseñado y Desarrollado por: <span class="underline">Minerva A&B - Kevin Jack Maguiña Balarezo</span>
+        </p>
+    </footer>
+
+    <!-- Lógica de Conexión y Gráficos con Imágenes sobre las Barras -->
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        let nivelSeleccionado = 'PRIMARIA';
+        let miGrafico = null;
+        let imagenesCandidatos = {}; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('fecha-actualizacion').innerText = new Date().toLocaleString('es-PE');
+            cargarResultados('PRIMARIA');
+        });
+
+        async function cargarResultados(nivel) {
+            nivelSeleccionado = nivel;
+            
+            if(nivel === 'PRIMARIA') {
+                document.getElementById('btn-primaria').className = "bg-[#125c1d] text-white font-bold py-2.5 px-5 rounded-xl text-sm shadow transition";
+                document.getElementById('btn-secundaria').className = "bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 px-5 rounded-xl text-sm shadow transition";
+            } else {
+                document.getElementById('btn-secundaria').className = "bg-[#125c1d] text-white font-bold py-2.5 px-5 rounded-xl text-sm shadow transition";
+                document.getElementById('btn-primaria').className = "bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 px-5 rounded-xl text-sm shadow transition";
+            }
+
+            try {
+                // 🔴 CORRECCIÓN: Apuntamos directamente a la ruta de resultados globales del backend
+                const response = await fetch(`${API_URL}/resultados/${nivel}`);
+                const data = await response.json();
+
+                if (!response.ok) return alert("Error al cargar los datos de resultados.");
+
+                const padronTotal = data.total_padron || 0;
+                const alumnosVotaron = data.total_votaron || 0;
+                let porcentajePart = 0;
+                if (padronTotal > 0) {
+                    porcentajePart = ((alumnosVotaron / padronTotal) * 100).toFixed(2);
+                }
+
+                document.getElementById('total-votaron').innerText = alumnosVotaron;
+                document.getElementById('total-padron').innerText = padronTotal;
+                document.getElementById('porcentaje-participacion').innerText = `${porcentajePart} %`;
+                document.getElementById('barra-progreso').style.width = `${porcentajePart}%`;
+                document.getElementById('titulo-grafico').innerText = `Resultados por Organización Política - Nivel ${nivel}`;
+
+                const etiquetas = [];
+                const votosValores = [];
+                const fotosUrls = [];
+                let HTMLTabla = '';
+
+                // Calcular total general de votos emitidos (listas + blancos)
+                const sumaVotosListas = data.listas.reduce((acc, l) => acc + (l.votos || 0), 0);
+                const totalVotosEmitidos = sumaVotosListas + (data.votos_blancos || 0);
+                const divisorTotal = totalVotosEmitidos > 0 ? totalVotosEmitidos : 1;
+
+                // Cargar datos de listas
+                data.listas.forEach((lista) => {
+                    etiquetas.push(lista.nombre_lista);
+                    votosValores.push(lista.votos);
+                    
+                    const baseUrl = API_URL.replace('/api', '');
+                    const fotoPath = lista.foto_candidato_url ? `${baseUrl}${lista.foto_candidato_url}` : '';
+                    fotosUrls.push(fotoPath);
+
+                    if (fotoPath && !imagenesCandidatos[fotoPath]) {
+                        const img = new Image();
+                        img.src = fotoPath;
+                        imagenesCandidatos[fotoPath] = img;
+                    }
+
+                    const porcentaje = ((lista.votos / divisorTotal) * 100).toFixed(3);
+                    HTMLTabla += `
+                        <tr class="hover:bg-slate-50 font-medium">
+                            <td class="p-3 text-slate-800 font-bold flex items-center gap-2">
+                                <img src="${fotoPath}" class="w-8 h-8 object-cover rounded-full border" onerror="this.style.display='none'">
+                                ${lista.nombre_lista}
+                            </td>
+                            <td class="p-3 text-slate-600">${lista.candidato_principal}</td>
+                            <td class="p-3 text-center font-bold text-[#125c1d]">${lista.votos}</td>
+                            <td class="p-3 text-right font-bold text-slate-700">${porcentaje} %</td>
+                        </tr>
+                    `;
+                });
+
+                // Votos en Blanco
+                etiquetas.push('Votos en Blanco');
+                votosValores.push(data.votos_blancos);
+                fotosUrls.push(''); 
+                const porcentajeBlancos = ((data.votos_blancos / divisorTotal) * 100).toFixed(3);
+                
+                HTMLTabla += `
+                    <tr class="bg-amber-50/60 font-semibold border-t">
+                        <td class="p-3 text-amber-900">Votos en Blanco</td>
+                        <td class="p-3 text-amber-700">--</td>
+                        <td class="p-3 text-center font-bold text-amber-900">${data.votos_blancos}</td>
+                        <td class="p-3 text-right font-bold text-amber-900">${porcentajeBlancos} %</td>
+                    </tr>
+                `;
+
+                document.getElementById('tabla-cuerpo').innerHTML = HTMLTabla;
+                renderizarGrafico(etiquetas, votosValores, fotosUrls, totalVotosEmitidos);
+                
+                document.getElementById('panel-grafico').classList.remove('hidden');
+                document.getElementById('panel-tabla').classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        function renderizarGrafico(etiquetas, datos, fotos, totalEmitidos) {
+            const ctx = document.getElementById('chartResultados').getContext('2d');
+            if (miGrafico) {
+                miGrafico.destroy();
+            }
+
+            const pluginFotosEncima = {
+                id: 'pluginFotosEncima',
+                afterDraw(chart) {
+                    const { ctx } = chart;
+                    chart.data.datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        meta.data.forEach((bar, index) => {
+                            const fotoUrl = fotos[index];
+                            if (fotoUrl && imagenesCandidatos[fotoUrl] && imagenesCandidatos[fotoUrl].complete) {
+                                const img = imagenesCandidatos[fotoUrl];
+                                const x = bar.x;
+                                const y = bar.y - 25; 
+                                const size = 32; 
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.arc(x, y, size / 2, 0, Math.PI * 2, true);
+                                ctx.closePath();
+                                ctx.clip();
+                                ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
+                                ctx.restore();
+
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.arc(x, y, size / 2, 0, Math.PI * 2, true);
+                                ctx.lineWidth = 2;
+                                ctx.strokeStyle = '#125c1d';
+                                ctx.stroke();
+                                ctx.restore();
+                            }
+                        });
+                    });
+                }
+            };
+
+            miGrafico = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        label: 'Cantidad de Votos',
+                        data: datos,
+                        backgroundColor: ['#125c1d', '#2563eb', '#d97706', '#9333ea', '#db2777', '#64748B'],
+                        borderRadius: 8
+                    }]
+                },
+                plugins: [pluginFotosEncima],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { top: 35 } 
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw;
+                                    const pct = ((val / totalEmitidos) * 100).toFixed(2);
+                                    return ` Votos: ${val} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function actualizarDatos() {
+            document.getElementById('fecha-actualizacion').innerText = new Date().toLocaleString('es-PE');
+            cargarResultados(nivelSeleccionado);
+        }
+    </script>
+</body>
+</html>

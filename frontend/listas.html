@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Listas y Candidatos - I.E. Coronel Bolognesi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+    <!-- Encabezado con Botón de Menú Principal -->
+    <header class="bg-[#125c1d] text-white p-4 shadow-lg border-b-4 border-yellow-500">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="Logo.png" alt="Escudo I.E. Coronel Bolognesi" class="h-12 w-12 object-contain bg-white rounded-full p-1 border-2 border-yellow-400">
+                <div>
+                    <h2 class="text-xs tracking-widest text-yellow-300 font-bold uppercase">I.E. Coronel Bolognesi - Chiquián</h2>
+                    <h1 class="text-lg font-extrabold">Gestión de Listas y Candidatos</h1>
+                </div>
+            </div>
+            <!-- Botón para regresar al menú principal -->
+            <a href="home.html" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold px-3 py-1.5 rounded-xl text-xs shadow transition flex items-center gap-1">
+                🏠 Menú Principal
+            </a>
+        </div>
+    </header>
+    <!-- Contenedor Principal -->
+    <main class="container mx-auto p-4 max-w-xl flex-1 flex flex-col justify-center my-6">
+        <!-- 1. Pantalla de Acceso con Contraseña de Administrador -->
+        <div id="seccion-auth" class="bg-white p-8 rounded-3xl shadow-2xl border-t-8 border-[#125c1d] text-center">
+            <div class="inline-block p-4 bg-green-50 text-[#125c1d] rounded-2xl text-3xl mb-3 shadow-inner">
+                🔐
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">Acceso de Administrador</h2>
+            <p class="text-xs text-slate-500 mb-6 font-medium">
+                Ingrese la contraseña para administrar las listas y candidatos participantes.
+            </p>
+            <div class="flex flex-col gap-3">
+                <input type="password" id="password-admin" placeholder="Contraseña de autorización" 
+                       class="border-2 border-slate-300 focus:border-[#125c1d] p-3.5 rounded-2xl text-base font-bold text-center outline-none transition shadow-sm">
+                
+                <button onclick="verificarPassword()" class="bg-[#125c1d] hover:bg-green-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition">
+                    Ingresar al Panel
+                </button>
+            </div>
+            <div id="error-msg" class="text-red-500 text-xs font-bold mt-4"></div>
+        </div>
+        <!-- 2. Panel de Administración de Listas (Oculto hasta autenticarse) -->
+        <div id="seccion-panel" class="hidden bg-white p-6 sm:p-8 rounded-3xl shadow-2xl border-t-8 border-[#125c1d]">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-lg font-black text-slate-800">📋 Listas Registradas</h3>
+                <button onclick="location.reload()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl transition">
+                    🔒 Cerrar Sesión
+                </button>
+            </div>
+            <!-- Formulario para Registrar Nueva Lista -->
+            <form id="form-lista" onsubmit="registrarLista(event)" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-6 flex flex-col gap-3">
+                <h4 class="font-extrabold text-xs text-[#125c1d] uppercase tracking-wider">➕ Inscribir Nueva Lista</h4>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input type="text" id="nombre-lista" placeholder="Nombre de la Lista (Ej. Lista 01)" required
+                           class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600">
+                    <input type="text" id="candidato-principal" placeholder="Nombre del Candidato (Alcalde)" required
+                           class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                    <select id="nivel-lista" class="border border-slate-300 p-2.5 rounded-xl text-xs font-bold outline-none focus:border-green-600 bg-white">
+                        <option value="PRIMARIA">Primaria</option>
+                        <option value="SECUNDARIA">Secundaria</option>
+                    </select>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-bold text-slate-500 mb-1">Foto o Símbolo (Imagen):</label>
+                        <input type="file" id="foto-lista" accept="image/*" required
+                               class="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-100 file:text-[#125c1d] hover:file:bg-green-200">
+                    </div>
+                </div>
+                <button type="submit" class="bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 rounded-xl text-xs shadow transition mt-1">
+                    Guardar y Registrar Lista 🚀
+                </button>
+            </form>
+            <!-- Contenedor donde se cargan las listas actuales -->
+            <div id="contenedor-listas" class="flex flex-col gap-3 max-h-72 overflow-y-auto pr-1">
+                <!-- Se cargan dinámicamente -->
+            </div>
+        </div>
+    </main>
+    <!-- Pie de página -->
+    <footer class="bg-[#125c1d] text-green-100 text-center p-4 text-xs border-t border-green-900 mt-6">
+        <p class="font-medium">I.E. Coronel Bolognesi - Chiquián &copy; 2026 - Sistema de Votación Escolar</p>
+        <p class="text-yellow-300 font-semibold mt-1">
+            Designed and Developed by: <span class="underline">Kevin Jack Maguiña Balarezo</span>
+        </p>
+    </footer>
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        
+        document.getElementById('password-admin').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                verificarPassword();
+            }
+        });
+
+        function verificarPassword() {
+            const pass = document.getElementById('password-admin').value.trim();
+            const errorDiv = document.getElementById('error-msg');
+            
+            if (pass === 'admin123' || pass === 'bolognesi2026') {
+                document.getElementById('seccion-auth').classList.add('hidden');
+                document.getElementById('seccion-panel').classList.remove('hidden');
+                cargarListasRegistradas();
+            } else {
+                errorDiv.innerText = 'Contraseña incorrecta. Intente nuevamente.';
+            }
+        }
+
+        async function cargarListasRegistradas() {
+            try {
+                const resP = await fetch(`${API_URL}/listas/PRIMARIA`);
+                const resS = await fetch(`${API_URL}/listas/SECUNDARIA`);
+                const listasP = await resP.json();
+                const listasS = await resS.json();
+                const todas = [...listasP, ...listasS];
+                const contenedor = document.getElementById('contenedor-listas');
+                contenedor.innerHTML = '';
+                
+                if (todas.length === 0) {
+                    contenedor.innerHTML = `<p class="text-center text-slate-400 text-xs py-4">No hay listas inscritas todavía.</p>`;
+                    return;
+                }
+                
+                todas.forEach(l => {
+                    contenedor.innerHTML += `
+                        <div class="flex items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+                            <div class="flex items-center gap-3">
+                                <img src="${API_URL.replace('/api', '')}${l.foto_candidato_url}" class="w-12 h-12 object-cover rounded-xl border border-slate-300">
+                                <div>
+                                    <h5 class="font-extrabold text-slate-800 text-xs">${l.nombre_lista} <span class="text-[9px] bg-yellow-400 text-slate-900 px-2 py-0.5 rounded-full ml-1">${l.nivel}</span></h5>
+                                    <p class="text-[11px] text-slate-500 font-semibold">${l.candidato_principal}</p>
+                                </div>
+                            </div>
+                            <button onclick="eliminarLista(${l.id})" class="bg-red-100 hover:bg-red-200 text-red-600 font-bold px-3 py-1.5 rounded-xl text-xs transition">
+                                🗑️ Eliminar
+                            </button>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error("Error al cargar listas:", err);
+            }
+        }
+
+        async function registrarLista(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('nombre_lista', document.getElementById('nombre-lista').value.trim());
+            formData.append('candidato_principal', document.getElementById('candidato-principal').value.trim());
+            formData.append('nivel', document.getElementById('nivel-lista').value);
+            formData.append('foto', document.getElementById('foto-lista').files[0]);
+            
+            try {
+                // CORREGIDO: Cambiado de '/listas' a '/lista' para que coincida con el backend
+                const res = await fetch(`${API_URL}/lista`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    alert(data.error || 'Error al registrar la lista.');
+                    return;
+                }
+                
+                alert('¡Lista registrada exitosamente!');
+                document.getElementById('form-lista').reset();
+                cargarListasRegistradas();
+            } catch (err) {
+                console.error("Error:", err);
+                alert('Error de conexión al registrar la lista.');
+            }
+        }
+
+        async function eliminarLista(id) {
+            if (!confirm("¿Está seguro de eliminar esta lista participante?")) return;
+            try {
+                // CORREGIDO: Cambiado de '/listas/${id}' a '/lista/${id}' para que coincida con el backend
+                const res = await fetch(`${API_URL}/lista/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    alert('No se pudo eliminar la lista.');
+                    return;
+                }
+                cargarListasRegistradas();
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+    </script>
+</body>
+</html>

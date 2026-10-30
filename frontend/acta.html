@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acta Electoral Oficial - I.E. Coronel Bolognesi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; margin: 0; }
+            .acta-onpe { border: 3px solid black !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 15px !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+    <!-- Encabezado de Navegación (No se imprime) -->
+    <header class="bg-[#125c1d] text-white p-4 shadow-lg border-b-4 border-yellow-500 no-print">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="/uploads/logo-izq.png" alt="Escudo I.E. Coronel Bolognesi" class="h-12 w-12 object-contain bg-white rounded-full p-1 border-2 border-yellow-400" onerror="this.src='Logo.png'">
+                <div>
+                    <h2 class="text-xs tracking-widest text-yellow-300 font-bold uppercase">I.E. Coronel Bolognesi - Chiquián</h2>
+                    <h1 class="text-lg font-extrabold">Generador de Acta Oficial - Modelo ONPE</h1>
+                </div>
+            </div>
+            <a href="home.html" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold px-3 py-1.5 rounded-xl text-xs shadow transition flex items-center gap-1">
+                🏠 Menú Principal
+            </a>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <div class="container mx-auto p-4 flex-1 flex flex-col items-center justify-center my-6">
+        
+        <!-- 1. Pantalla de Autenticación -->
+        <div id="login-acta" class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border-t-8 border-[#125c1d] no-print">
+            <div class="inline-block p-4 bg-green-50 text-[#125c1d] rounded-2xl text-3xl mb-3 shadow-inner">🔐</div>
+            <h2 class="text-2xl font-black text-slate-800 mb-1">Acceso Restringido</h2>
+            <p class="text-xs text-slate-500 mb-6 font-medium">Solo personal autorizado del Comité Electoral y Administradores</p>
+            
+            <input type="password" id="clave-acceso" placeholder="Ingrese contraseña de autorización" class="border-2 border-slate-300 focus:border-[#125c1d] p-3.5 w-full rounded-2xl text-sm font-bold text-center mb-4 outline-none transition shadow-sm">
+            <button onclick="validarAcceso()" class="bg-[#125c1d] hover:bg-green-800 text-white font-bold py-3.5 px-6 rounded-2xl w-full transition shadow-lg text-xs">
+                Ingresar al Formulario
+            </button>
+            <p id="error-clave" class="text-red-500 text-xs font-bold mt-3"></p>
+        </div>
+
+        <!-- 2. Formulario de Configuración -->
+        <div id="selector-nivel" class="hidden bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-2xl w-full mb-6 border-t-8 border-[#125c1d] no-print">
+            <h3 class="text-lg font-black text-slate-800 mb-4 text-center border-b pb-3">⚙️ Configuración del Acta Electoral</h3>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nivel Electoral:</label>
+                    <select id="input-nivel" class="w-full border-2 border-slate-300 p-2.5 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-[#125c1d] bg-white">
+                        <option value="PRIMARIA">PRIMARIA</option>
+                        <option value="SECUNDARIA">SECUNDARIA</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Acta:</label>
+                    <select id="tipo-acta" onchange="toggleMesaSelector()" class="w-full border-2 border-slate-300 p-2.5 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-[#125c1d] bg-white">
+                        <option value="mesa">Acta por Mesa Específica</option>
+                        <option value="general">📊 Acta General Consolidada (Desglose Mesas 1-4)</option>
+                    </select>
+                </div>
+
+                <div id="div-mesa" class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Seleccionar Mesa N°:</label>
+                    <select id="input-mesa" class="w-full border-2 border-slate-300 p-2.5 rounded-xl font-bold text-xs text-slate-700 outline-none focus:border-[#125c1d] bg-white">
+                        <option value="1">Mesa 1</option>
+                        <option value="2">Mesa 2</option>
+                        <option value="3">Mesa 3</option>
+                        <option value="4">Mesa 4</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Hora de Instalación:</label>
+                    <input type="time" id="input-hora-inicio" value="08:00" class="w-full border-2 border-slate-300 p-2.5 rounded-xl text-xs outline-none focus:border-[#125c1d]">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Hora de Fin de Escrutinio:</label>
+                    <input type="time" id="input-hora-fin" value="14:00" class="w-full border-2 border-slate-300 p-2.5 rounded-xl text-xs outline-none focus:border-[#125c1d]">
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones del Proceso:</label>
+                <input type="text" id="input-observaciones" value="Proceso electoral ejecutado con absoluta normalidad y transparencia." class="w-full border-2 border-slate-300 p-2.5 rounded-xl text-xs outline-none focus:border-[#125c1d]">
+            </div>
+
+            <button onclick="verificarYGenerarActa()" class="bg-[#125c1d] hover:bg-green-800 text-white font-bold py-3.5 px-6 rounded-2xl w-full text-xs shadow-xl transition">
+                📄 Generar Acta Oficial Formato ONPE 🚀
+            </button>
+        </div>
+
+        <!-- Botón de Impresión -->
+        <div id="acciones-acta" class="hidden max-w-4xl w-full flex justify-end mb-4 no-print">
+            <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg flex items-center gap-2 text-xs transition">
+                🖨️ Imprimir / Guardar Acta Oficial (PDF)
+            </button>
+        </div>
+
+        <!-- 3. ACTA ELECTORAL OFICIAL (Diseño Exacto Modelo ONPE con soporte para desglose de mesas) -->
+        <div id="vista-acta" class="hidden acta-container acta-onpe bg-white border-2 border-black p-6 max-w-4xl w-full text-black font-sans shadow-2xl text-xs leading-tight">
+            
+            <!-- Encabezado con Escudos / Logos -->
+            <div class="border-b-2 border-black pb-3 mb-3 grid grid-cols-12 items-center text-center">
+                <div class="col-span-2 flex justify-center">
+                    <img src="/uploads/onpe.jpg" alt="Logo Izq" class="h-14 w-14 object-contain" onerror="this.src='Logo.png'">
+                </div>
+                <div class="col-span-8">
+                    <h1 class="text-sm font-black uppercase tracking-wide">ELECCIÓN DEL MUNICIPIO ESCOLAR 2026</h1>
+                    <h2 class="text-base font-extrabold tracking-wider my-0.5">ONPE - COMITÉ ELECTORAL</h2>
+                    <h3 id="titulo-acta-tipo" class="text-lg font-black underline">ACTA ELECTORAL</h3>
+                    <p class="font-bold text-[11px] mt-0.5">I.E. CORONEL BOLOGNESI - CHIQUIÁN</p>
+                </div>
+                <div class="col-span-2 flex justify-center">
+                    <img src="/uploads/ccb.png" alt="Logo Der" class="h-14 w-14 object-contain" onerror="this.src='Logo.png'">
+                </div>
+                <div class="col-span-12 flex justify-between font-bold text-[11px] mt-3 pt-2 border-t border-black px-2">
+                    <span>FECHA: <strong id="acta-fecha" class="border-b border-black px-1 font-normal"></strong></span>
+                    <span>NIVEL: <strong id="acta-nivel" class="border-b border-black px-1 uppercase font-normal"></strong></span>
+                    <span>TIPO / MESA: <strong id="acta-mesa" class="border-b border-black px-1 font-normal"></strong></span>
+                </div>
+            </div>
+
+            <!-- INSTALACIÓN Y SUFRAGIO -->
+            <div class="grid grid-cols-2 gap-2 border-2 border-black p-2 mb-3 text-[11px]">
+                <div class="border-r border-black pr-2">
+                    <h4 class="font-black uppercase text-center border-b border-black pb-1 mb-1 bg-slate-100">1. INSTALACIÓN</h4>
+                    <p class="mt-1">El proceso se instala a las <span id="acta-hora-inicio" class="border-b border-black px-2 font-bold"></span> horas.</p>
+                </div>
+                <div class="pl-2">
+                    <h4 class="font-black uppercase text-center border-b border-black pb-1 mb-1 bg-slate-100">2. SUFRAGIO (VOTACIÓN)</h4>
+                    <p class="mt-1">El sufragio concluye a las <span id="acta-hora-fin" class="border-b border-black px-2 font-bold"></span> horas.</p>
+                    <p class="mt-1">Total de electores que votaron: <strong id="acta-votaron" class="border-b border-black px-2">0</strong></p>
+                </div>
+            </div>
+
+            <!-- ESCRUTINIO O CONTEO DE VOTOS (TABLA DINÁMICA) -->
+            <div class="border-2 border-black p-2 mb-3">
+                <h4 class="font-black uppercase text-center text-xs border-b border-black pb-1 mb-2 bg-slate-100">3. ESCRUTINIO (CONTEO DE VOTOS Y CANDIDATOS POR MESA)</h4>
+                
+                <table id="tabla-escrutinio" class="w-full border-collapse border border-black text-[11px] mb-2">
+                    <!-- Cabecera e hilos inyectados dinámicamente según sea mesa o general -->
+                </table>
+
+                <div class="text-[11px] mt-1">
+                    <p>Hora de fin del escrutinio: <span id="acta-hora-fin-txt" class="border-b border-black px-3 font-bold"></span></p>
+                    <p class="mt-1">Observaciones: <span id="acta-observaciones" class="border-b border-black w-full inline-block mt-0.5 font-medium"></span></p>
+                </div>
+            </div>
+
+            <!-- FIRMAS -->
+            <div class="border-2 border-black p-3 text-[10px]">
+                <h4 class="font-black text-center mb-4 uppercase bg-slate-100 py-1 border-b border-black">4. FIRMAS DEL COMITÉ ELECTORAL / ADMINISTRACIÓN</h4>
+                <div class="grid grid-cols-3 gap-4 text-center border-b border-black pb-6 mb-4">
+                    <div>
+                        <div class="border-t border-black pt-1 mx-2 mt-8"></div>
+                        <p class="font-bold">PRESIDENTE(A) COMITÉ</p>
+                        <p class="text-[9px] text-slate-600">DNI: ........................</p>
+                    </div>
+                    <div>
+                        <div class="border-t border-black pt-1 mx-2 mt-8"></div>
+                        <p class="font-bold">SECRETARIO(A) GENERAL</p>
+                        <p class="text-[9px] text-slate-600">DNI: ........................</p>
+                    </div>
+                    <div>
+                        <div class="border-t border-black pt-1 mx-2 mt-8"></div>
+                        <p class="font-bold">ADMINISTRADOR / DOCENTE</p>
+                        <p class="text-[9px] text-slate-600">DNI: ........................</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de página Institucional -->
+    <footer class="bg-[#125c1d] text-green-100 text-center p-4 text-xs border-t border-green-900 no-print">
+        <p class="font-medium">I.E. Coronel Bolognesi - Chiquián &copy; 2026 - Sistema de Votación Escolar</p>
+        <p class="text-yellow-300 font-semibold mt-1">
+            Diseñado y Desarrollado por: <span class="underline">Minerva A&B - Kevin Jack Maguiña Balarezo</span>
+        </p>
+    </footer>
+
+    <!-- Lógica de Llenado y Control -->
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        
+        function validarAcceso() {
+            const clave = document.getElementById('clave-acceso').value;
+            if (clave === 'admin123' || clave === 'bolognesi2026') {
+                document.getElementById('login-acta').classList.add('hidden');
+                document.getElementById('selector-nivel').classList.remove('hidden');
+            } else {
+                document.getElementById('error-clave').innerText = 'Contraseña incorrecta. Acceso denegado.';
+            }
+        }
+
+        function toggleMesaSelector() {
+            const tipo = document.getElementById('tipo-acta').value;
+            const divMesa = document.getElementById('div-mesa');
+            if (tipo === 'general') {
+                divMesa.classList.add('hidden');
+            } else {
+                divMesa.classList.remove('hidden');
+            }
+        }
+
+        function verificarYGenerarActa() {
+            const tipoActa = document.getElementById('tipo-acta').value;
+
+            if (tipoActa === 'general') {
+                const passGeneral = prompt("🔐 SEGURIDAD RESTRINGIDA:\nIngrese la contraseña exclusiva para generar el Acta General Consolidada con desglose:");
+                if (passGeneral === null) return;
+                if (passGeneral !== 'acta2026' && passGeneral !== 'bolognesi2026') {
+                    alert("❌ Contraseña incorrecta. Acceso denegado.");
+                    return;
+                }
+            }
+            generarActa();
+        }
+
+        async function generarActa() {
+            const nivel = document.getElementById('input-nivel').value;
+            const tipoActa = document.getElementById('tipo-acta').value;
+            const mesa = document.getElementById('input-mesa').value;
+            const horaInicio = document.getElementById('input-hora-inicio').value;
+            const horaFin = document.getElementById('input-hora-fin').value;
+            const observaciones = document.getElementById('input-observaciones').value;
+
+            try {
+                let endpoint = (tipoActa === 'general') ? `${API_URL}/acta/${nivel}` : `${API_URL}/acta/${nivel}/${mesa}`;
+                const response = await fetch(endpoint);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert('Error al obtener datos del acta desde el servidor.');
+                    return;
+                }
+
+                document.getElementById('acta-fecha').innerText = data.fecha;
+                document.getElementById('acta-nivel').innerText = data.nivel;
+                document.getElementById('acta-hora-inicio').innerText = horaInicio;
+                document.getElementById('acta-hora-fin').innerText = horaFin;
+                document.getElementById('acta-hora-fin-txt').innerText = horaFin;
+                document.getElementById('acta-observaciones').innerText = observaciones;
+                document.getElementById('acta-votaron').innerText = data.total_votaron;
+
+                const tabla = document.getElementById('tabla-escrutinio');
+                tabla.innerHTML = '';
+
+                if (tipoActa === 'general') {
+                    document.getElementById('titulo-acta-tipo').innerText = 'ACTA ELECTORAL GENERAL CONSOLIDADA';
+                    document.getElementById('acta-mesa').innerText = 'GENERAL (DESGLOSE M1-M4)';
+
+                    // Construir cabecera con columnas para Mesa 1, 2, 3, 4 y Total
+                    let theadHtml = `
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-black text-center font-bold">
+                                <th class="border border-black p-1">Lista / Candidato</th>
+                                <th class="border border-black p-1 w-12">Mesa 1</th>
+                                <th class="border border-black p-1 w-12">Mesa 2</th>
+                                <th class="border border-black p-1 w-12">Mesa 3</th>
+                                <th class="border border-black p-1 w-12">Mesa 4</th>
+                                <th class="border border-black p-1 w-16">Total Votos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filas-listas-gen"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td class="border border-black p-1 font-bold text-right">Votos en Blanco:</td>
+                                <td class="border border-black p-1 text-center">${data.detalle_mesas[0].votos_blancos}</td>
+                                <td class="border border-black p-1 text-center">${data.detalle_mesas[1].votos_blancos}</td>
+                                <td class="border border-black p-1 text-center">${data.detalle_mesas[2].votos_blancos}</td>
+                                <td class="border border-black p-1 text-center">${data.detalle_mesas[3].votos_blancos}</td>
+                                <td id="acta-blancos" class="border border-black p-1 text-center font-bold">${data.votos_blancos}</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-black p-1 font-bold text-right">Votos Nulos:</td>
+                                <td colspan="4" class="border border-black p-1 text-center text-slate-400">---</td>
+                                <td id="acta-nulos" class="border border-black p-1 text-center font-bold">0</td>
+                            </tr>
+                            <tr class="bg-slate-100 font-black">
+                                <td class="border border-black p-1 uppercase text-right">TOTAL VOTOS EMITIDOS:</td>
+                                <td class="border border-black p-1 text-center">${data.detalle_mesas[0].total_votaron}</td>
+                                <td class="border border-black p-1 text-center">${data.detalle_mesas[1].total_votaron}</td>
+                                <td class="border border-black p-1 text-center">${data.detalle_mesas[2].total_votaron}</td>
+                                <td class="border border-black p-1 text-center">${data.detalle_mesas[3].total_votaron}</td>
+                                <td id="acta-total" class="border border-black p-1 text-center text-sm">${data.total_emitidos}</td>
+                            </tr>
+                        </tfoot>
+                    `;
+                    tabla.innerHTML = theadHtml;
+
+                    const tbodyGen = document.getElementById('filas-listas-gen');
+                    if (data.listas && data.listas.length > 0) {
+                        data.listas.forEach(lista => {
+                            tbodyGen.innerHTML += `
+                                <tr class="border-b border-black">
+                                    <td class="border border-black p-1.5 font-bold">
+                                        ${lista.nombre_lista} <span class="font-normal text-[10px] text-slate-600 block">(${lista.candidato_principal})</span>
+                                    </td>
+                                    <td class="border border-black p-1 text-center font-mono">${lista.desglose.mesa_1}</td>
+                                    <td class="border border-black p-1 text-center font-mono">${lista.desglose.mesa_2}</td>
+                                    <td class="border border-black p-1 text-center font-mono">${lista.desglose.mesa_3}</td>
+                                    <td class="border border-black p-1 text-center font-mono">${lista.desglose.mesa_4}</td>
+                                    <td class="border border-black p-1 text-center font-mono font-black text-sm bg-slate-50">${lista.votos_totales}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                } else {
+                    // Diseño clásico para Mesa específica
+                    document.getElementById('titulo-acta-tipo').innerText = 'ACTA ELECTORAL DE MESA';
+                    document.getElementById('acta-mesa').innerText = `MESA N° ${mesa}`;
+
+                    let theadHtml = `
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-black text-center font-bold">
+                                <th class="border border-black p-1.5 w-12">Foto</th>
+                                <th class="border border-black p-1.5 text-left">Lista / Candidato Presidencial</th>
+                                <th class="border border-black p-1.5 w-24">Total Votos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filas-listas-mesa"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" class="border border-black p-1.5 font-bold text-right">Votos en Blanco:</td>
+                                <td id="acta-blancos" class="border border-black p-1.5 text-center font-bold">${data.votos_blancos}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="border border-black p-1.5 font-bold text-right">Votos Nulos:</td>
+                                <td id="acta-nulos" class="border border-black p-1.5 text-center font-bold">${data.votos_nulos}</td>
+                            </tr>
+                            <tr class="bg-slate-100 font-black">
+                                <td colspan="2" class="border border-black p-1.5 uppercase text-right">TOTAL DE VOTOS EMITIDOS:</td>
+                                <td id="acta-total" class="border border-black p-1.5 text-center text-sm">${data.total_emitidos}</td>
+                            </tr>
+                        </tfoot>
+                    `;
+                    tabla.innerHTML = theadHtml;
+
+                    const tbodyMesa = document.getElementById('filas-listas-mesa');
+                    if (data.listas && data.listas.length > 0) {
+                        data.listas.forEach(lista => {
+                            const fotoUrl = lista.foto_candidato_url ? `${API_URL.replace('/api', '')}${lista.foto_candidato_url}` : '';
+                            tbodyMesa.innerHTML += `
+                                <tr class="border-b border-black">
+                                    <td class="border border-black p-1 text-center">
+                                        <img src="${fotoUrl}" alt="Foto" class="w-10 h-10 object-cover mx-auto rounded border" onerror="this.style.display='none'">
+                                    </td>
+                                    <td class="border border-black p-1.5 font-bold">
+                                        ${lista.nombre_lista} <span class="font-normal text-[11px] block text-slate-600">Candidato: ${lista.candidato_principal}</span>
+                                    </td>
+                                    <td class="border border-black p-1.5 text-center font-black text-sm">${lista.votos}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                }
+
+                document.getElementById('vista-acta').classList.remove('hidden');
+                document.getElementById('acciones-acta').classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert('No se pudo conectar con el servidor.');
+            }
+        }
+    </script>
+</body>
+</html>
