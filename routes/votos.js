@@ -3,6 +3,8 @@ const router = express.Router();
 const db = require('../config/db');
 const multer = require('multer');
 const path = require('path');
+const xlsx = require('xlsx');
+
 // Configuración para guardar las fotos subidas en la carpeta uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -88,16 +90,13 @@ router.post('/votar', (req, res) => {
 router.get('/resultados/:nivel', (req, res) => {
   const { nivel } = req.params;
   const nivelLimpio = nivel.trim().toUpperCase();
-
   db.get(`SELECT COUNT(*) as total_padron FROM estudiantes WHERE UPPER(TRIM(nivel)) = ?`, [nivelLimpio], (err, rowPadron) => {
     if (err) return res.status(500).json({ error: err.message });
     const totalPadron = rowPadron ? rowPadron.total_padron : 0;
-
     db.get(`SELECT COUNT(*) as total_votaron FROM estudiantes WHERE UPPER(TRIM(nivel)) = ? AND ha_votado = 1`, [nivelLimpio], (err, rowVotaron) => {
       if (err) return res.status(500).json({ error: err.message });
       const totalVotaron = rowVotaron ? rowVotaron.total_votaron : 0;
-
-      // Consulta de votos por lista filtrando estrictamente por el nivel y sumando todas las mesas
+      
       const queryListas = `
         SELECT l.id, l.nombre_lista, l.candidato_principal, l.foto_candidato_url, 
                (SELECT COUNT(v.id) FROM votos v WHERE v.lista_id = l.id AND UPPER(TRIM(v.nivel)) = ?) as votos
@@ -106,12 +105,10 @@ router.get('/resultados/:nivel', (req, res) => {
       `;
       db.all(queryListas, [nivelLimpio, nivelLimpio], (err, listas) => {
         if (err) return res.status(500).json({ error: err.message });
-
-        // Conteo exacto de votos en blanco filtrado por el nivel correspondiente
+        
         db.get(`SELECT COUNT(*) as blancos FROM votos WHERE lista_id IS NULL AND UPPER(TRIM(nivel)) = ?`, [nivelLimpio], (err, rowBlancos) => {
           if (err) return res.status(500).json({ error: err.message });
           const votosBlancos = rowBlancos ? rowBlancos.blancos : 0;
-
           res.json({
             nivel: nivelLimpio,
             total_padron: totalPadron,
@@ -252,6 +249,7 @@ router.get('/estudiantes', (req, res) => {
     res.json(filas);
   });
 });
+
 router.post('/estudiantes', (req, res) => {
   const { dni, codigo_qr, nombres, apellidos, nivel, grado_seccion, mesa } = req.body;
   const dniLimpio = String(dni || '').trim();
@@ -272,6 +270,7 @@ router.post('/estudiantes', (req, res) => {
     res.json({ success: true, message: 'Estudiante registrado correctamente.' });
   });
 });
+
 router.put('/estudiantes/:dni', (req, res) => {
   const { dni } = req.params;
   const { nombres, apellidos, nivel, grado_seccion, mesa } = req.body;
@@ -289,6 +288,7 @@ router.put('/estudiantes/:dni', (req, res) => {
     res.json({ success: true, message: 'Estudiante actualizado correctamente.' });
   });
 });
+
 router.delete('/estudiantes/:dni', (req, res) => {
   const { dni } = req.params;
   db.run(`DELETE FROM estudiantes WHERE TRIM(dni) = ?`, [dni.trim()], function(err) {
@@ -296,52 +296,70 @@ router.delete('/estudiantes/:dni', (req, res) => {
     res.json({ success: true, message: 'Estudiante eliminado del padrón.' });
   });
 });
-router.post('/estudiantes/importar', (req, res) => {
-  const estudiantes = req.body;
-  if (!Array.isArray(estudiantes) || estudiantes.length === 0) {
-    return res.status(400).json({ error: 'El archivo o solicitud no contiene registros válidos.' });
-  }
-  db.serialize(() => {
-    db.run("BEGIN TRANSACTION;");
-    
-    const stmt = db.prepare(`
-      INSERT INTO estudiantes (dni, codigo_qr, nombres, apellidos, nivel, grado_seccion, mesa, ha_votado) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-    `);
-    let errorDuplicado = false;
-    let datoExistente = '';
-    
-    for (const est of estudiantes) {
-      const dni = String(est.dni || est.DNI || '').trim();
-      const codigo_qr = String(est.codigo_qr || est.QR || est.codigo || dni).trim();
-      const nombres = String(est.nombres || est.Nombres || '').trim();
-      const apellidos = String(est.apellidos || est.Apellidos || '').trim();
-      const nivel = String(est.nivel || est.Nivel || 'PRIMARIA').toUpperCase().trim();
-      const grado_seccion = String(est.grado_seccion || est.seccion || est.Grado || '').trim();
-      const mesa = parseInt(est.mesa || est.Mesa || 1, 10);
-      if (dni && nombres) {
-        stmt.run(dni, codigo_qr, nombres, apellidos, nivel, grado_seccion, mesa, function(err) {
-          if (err) {
-            errorDuplicado = true;
-            datoExistente = dni;
-          }
+
+// RUTA PARA IMPORTAR EXCEL CON MULTER Y XLSX (Soporta codigo_qr, dni, nombres, apellidos, nivel, grado_seccion, mesa)
+router.post('/estudiantes/importar', upload.single('archivo'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se ha subido ningún archivo Excel.' });
+    }
+
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const estudiantes = xlsx.utils.sheet_to_json(sheet);
+
+    if (!Array.isArray(estudiantes) || estudiantes.length === 0) {
+      return res.status(400).json({ error: 'El archivo Excel está vacío o no contiene registros válidos.' });
+    }
+
+    db.serialize(() => {
+      db.run("BEGIN TRANSACTION;");
+      
+      const stmt = db.prepare(`
+        INSERT INTO estudiantes (dni, codigo_qr, nombres, apellidos, nivel, grado_seccion, mesa, ha_votado) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+      `);
+      let errorDuplicado = false;
+      let datoExistente = '';
+      
+      for (const est of estudiantes) {
+        const dni = String(est.dni || est.DNI || '').trim();
+        const codigo_qr = String(est.codigo_qr || est.QR || est.codigo || dni).trim();
+        const nombres = String(est.nombres || est.Nombres || '').trim();
+        const apellidos = String(est.apellidos || est.Apellidos || '').trim();
+        const nivel = String(est.nivel || est.Nivel || 'PRIMARIA').toUpperCase().trim();
+        const grado_seccion = String(est.grado_seccion || est.seccion || est.Grado || '').trim();
+        const mesa = parseInt(est.mesa || est.Mesa || 1, 10);
+
+        if (dni && nombres) {
+          stmt.run(dni, codigo_qr, nombres, apellidos, nivel, grado_seccion, mesa, function(err) {
+            if (err) {
+              errorDuplicado = true;
+              datoExistente = dni;
+            }
+          });
+        }
+      }
+      stmt.finalize();
+
+      if (errorDuplicado) {
+        db.run("ROLLBACK;");
+        return res.status(400).json({ 
+          error: `Registro cancelado: Verifique si el DNI o el código QR '${datoExistente}' ya se encuentra inscrito o repetido.` 
         });
       }
-    }
-    stmt.finalize();
-    if (errorDuplicado) {
-      db.run("ROLLBACK;");
-      return res.status(400).json({ 
-        error: `Registro cancelado: Verifique si el DNI o el código QR '${datoExistente}' ya se encuentra inscrito.` 
+
+      db.run("COMMIT;", (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Error al guardar los estudiantes en la base de datos.' });
+        }
+        res.json({ success: true, registrados: estudiantes.length });
       });
-    }
-    db.run("COMMIT;", (err) => {
-      if (err) {
-        return res.status(500).json({ error: 'Error al guardar los estudiantes en la base de datos.' });
-      }
-      res.json({ success: true, registrados: estudiantes.length });
     });
-  });
+  } catch (e) {
+    res.status(500).json({ error: 'Error al procesar el archivo Excel: ' + e.message });
+  }
 });
 
 // 6. GESTIÓN DE LISTAS ELECTORALES
@@ -357,80 +375,4 @@ router.post('/lista', upload.single('foto'), (req, res) => {
     if (err) {
       return res.status(500).json({ error: 'Error al guardar la lista en la base de datos.' });
     }
-    res.json({ success: true, id: this.lastID, foto_url: foto_candidato_url });
-  });
-});
-router.delete('/lista/:id', (req, res) => {
-  const { id } = req.params;
-  db.run(`DELETE FROM listas WHERE id = ?`, [id], function(err) {
-    if (err) return res.status(500).json({ error: 'Error al eliminar la lista.' });
-    res.json({ success: true, message: 'Lista eliminada correctamente' });
-  });
-});
-router.put('/lista/:id', upload.single('foto'), (req, res) => {
-  const { id } = req.params;
-  const { nombre_lista, candidato_principal, nivel } = req.body;
-  if (!nombre_lista || !candidato_principal || !nivel) {
-    return res.status(400).json({ error: 'Faltan datos obligatorios para actualizar la lista.' });
-  }
-  const nivelLimpio = nivel.trim().toUpperCase();
-  if (req.file) {
-    const foto_candidato_url = `/uploads/${req.file.filename}`;
-    const query = `UPDATE listas SET nombre_lista = ?, candidato_principal = ?, nivel = ?, foto_candidato_url = ? WHERE id = ?`;
-    db.run(query, [nombre_lista.trim(), candidato_principal.trim(), nivelLimpio, foto_candidato_url, id], function(err) {
-      if (err) return res.status(500).json({ error: 'Error al actualizar la lista.' });
-      res.json({ success: true });
-    });
-  } else {
-    const query = `UPDATE listas SET nombre_lista = ?, candidato_principal = ?, nivel = ? WHERE id = ?`;
-    db.run(query, [nombre_lista.trim(), candidato_principal.trim(), nivelLimpio, id], function(err) {
-      if (err) return res.status(500).json({ error: 'Error al actualizar la lista.' });
-      res.json({ success: true });
-    });
-  }
-});
-
-// 9. Reporte de Asistencia
-router.get('/estudiantes/estado/:nivel', (req, res) => {
-  const { nivel } = req.params;
-  let query = `SELECT dni, nombres, apellidos, nivel, grado_seccion, mesa, COALESCE(ha_votado, 0) as votado FROM estudiantes`;
-  let params = [];
-  if (nivel !== 'TODOS') {
-      query += ` WHERE UPPER(TRIM(nivel)) = ?`;
-      params.push(nivel.toUpperCase());
-  }
-  query += ` ORDER BY mesa ASC, grado_seccion ASC, apellidos ASC`;
-  db.all(query, params, (err, rows) => {
-      if (err) return res.status(500).json({ error: 'Error al consultar la lista de estudiantes.' });
-      
-      const total = rows.length;
-      const votaron = rows.filter(e => Number(e.votado) === 1).length;
-      const pendientes = total - votaron;
-      res.json({
-          resumen: { total, votaron, pendientes },
-          estudiantes: rows
-      });
-  });
-});
-
-// 10. Reiniciar Elecciones
-router.post('/reiniciar-elecciones', (req, res) => {
-  db.serialize(() => {
-    db.run('BEGIN TRANSACTION');
-    db.run(`DELETE FROM votos`, (err) => {
-      if (err) {
-        db.run('ROLLBACK');
-        return res.status(500).json({ error: 'Error al limpiar los votos.' });
-      }
-      db.run(`UPDATE estudiantes SET ha_votado = 0, fecha_voto = NULL`, (err2) => {
-        if (err2) {
-          db.run('ROLLBACK');
-          return res.status(500).json({ error: 'Error al restablecer el padrón.' });
-        }
-        db.run('COMMIT');
-        res.json({ success: true, message: 'Elecciones reiniciadas con éxito.' });
-      });
-    });
-  });
-});
-module.exports = router;
+    res.json({ success: true, id: this.lastID, foto_url: foto_candid
