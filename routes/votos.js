@@ -375,4 +375,83 @@ router.post('/lista', upload.single('foto'), (req, res) => {
     if (err) {
       return res.status(500).json({ error: 'Error al guardar la lista en la base de datos.' });
     }
-    res.json({ success: true, id: this.lastID, foto_url: foto_candid
+    res.json({ success: true, id: this.lastID, foto_url: foto_candidato_url });
+  });
+});
+
+router.delete('/lista/:id', (req, res) => {
+  const { id } = req.params;
+  db.run(`DELETE FROM listas WHERE id = ?`, [id], function(err) {
+    if (err) return res.status(500).json({ error: 'Error al eliminar la lista.' });
+    res.json({ success: true, message: 'Lista eliminada correctamente' });
+  });
+});
+
+router.put('/lista/:id', upload.single('foto'), (req, res) => {
+  const { id } = req.params;
+  const { nombre_lista, candidato_principal, nivel } = req.body;
+  if (!nombre_lista || !candidato_principal || !nivel) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios para actualizar la lista.' });
+  }
+  const nivelLimpio = nivel.trim().toUpperCase();
+  if (req.file) {
+    const foto_candidato_url = `/uploads/${req.file.filename}`;
+    const query = `UPDATE listas SET nombre_lista = ?, candidato_principal = ?, nivel = ?, foto_candidato_url = ? WHERE id = ?`;
+    db.run(query, [nombre_lista.trim(), candidato_principal.trim(), nivelLimpio, foto_candidato_url, id], function(err) {
+      if (err) return res.status(500).json({ error: 'Error al actualizar la lista.' });
+      res.json({ success: true });
+    });
+  } else {
+    const query = `UPDATE listas SET nombre_lista = ?, candidato_principal = ?, nivel = ? WHERE id = ?`;
+    db.run(query, [nombre_lista.trim(), candidato_principal.trim(), nivelLimpio, id], function(err) {
+      if (err) return res.status(500).json({ error: 'Error al actualizar la lista.' });
+      res.json({ success: true });
+    });
+  }
+});
+
+// 9. Reporte de Asistencia
+router.get('/estudiantes/estado/:nivel', (req, res) => {
+  const { nivel } = req.params;
+  let query = `SELECT dni, nombres, apellidos, nivel, grado_seccion, mesa, COALESCE(ha_votado, 0) as votado FROM estudiantes`;
+  let params = [];
+  if (nivel !== 'TODOS') {
+      query += ` WHERE UPPER(TRIM(nivel)) = ?`;
+      params.push(nivel.toUpperCase());
+  }
+  query += ` ORDER BY mesa ASC, grado_seccion ASC, apellidos ASC`;
+  db.all(query, params, (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Error al consultar la lista de estudiantes.' });
+      
+      const total = rows.length;
+      const votaron = rows.filter(e => Number(e.votado) === 1).length;
+      const pendientes = total - votaron;
+      res.json({
+          resumen: { total, votaron, pendientes },
+          estudiantes: rows
+      });
+  });
+});
+
+// 10. Reiniciar Elecciones
+router.post('/reiniciar-elecciones', (req, res) => {
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+    db.run(`DELETE FROM votos`, (err) => {
+      if (err) {
+        db.run('ROLLBACK');
+        return res.status(500).json({ error: 'Error al limpiar los votos.' });
+      }
+      db.run(`UPDATE estudiantes SET ha_votado = 0, fecha_voto = NULL`, (err2) => {
+        if (err2) {
+          db.run('ROLLBACK');
+          return res.status(500).json({ error: 'Error al restablecer el padrón.' });
+        }
+        db.run('COMMIT');
+        res.json({ success: true, message: 'Elecciones reiniciadas con éxito.' });
+      });
+    });
+  });
+});
+
+module.exports = router;
